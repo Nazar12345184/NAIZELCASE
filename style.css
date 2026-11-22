@@ -1,0 +1,532 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background-color: #111712;
+    color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    min-height: 78px;
+    padding: 16px clamp(20px, 6vw, 88px);
+    display: flex;
+    align-items: center;
+    background: linear-gradient(110deg, #1d271f, #131914);
+    border-bottom: 1px solid #2b3a2f;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 20%);
+}
+
+.header-name {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(20px, 3vw, 27px);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+}
+
+
+.btn-nav {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    padding: 0 14px;
+    font-family: var(--font-subheading);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    transition: color 0.15s ease, opacity 0.15s ease;
+    white-space: nowrap;
+    text-transform: capitalize;
+    letter-spacing: 0.01em;
+}
+
+.registration-page {
+    min-height: calc(100vh - 78px);
+    padding: 48px 20px;
+    display: grid;
+    place-items: center;
+}
+
+.account-page {
+    --account-accent: #65cf8a;
+    padding: clamp(24px, 4vw, 48px) clamp(16px, 5vw, 80px);
+    place-items: start center;
+}
+
+.account-page .account-profile-card {
+    width: 100%;
+    max-width: 1440px;
+    padding: 0;
+    overflow: hidden;
+    background: #19201b;
+    border-color: #34463a;
+}
+
+.account-dashboard {
+    display: grid;
+    min-height: 480px;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+}
+
+.account-sidebar {
+    padding: 32px;
+    background: #151b17;
+    border-right: 1px solid #34463a;
+}
+
+.account-sidebar h1 {
+    margin: 0 0 24px;
+}
+
+.account-sidebar .account-detail {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #34463a;
+}
+
+.account-sidebar #sign-out {
+    width: 100%;
+}
+
+.account-main-panel {
+    min-width: 0;
+    padding: 32px;
+}
+
+.account-link-section {
+    display: flex;
+    padding: 20px 24px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    background: #1f2a22;
+    border: 1px solid #34463a;
+}
+
+.account-link-section p {
+    margin: 0;
+    color: #d8e6db;
+    line-height: 1.5;
+}
+
+.account-link-section .registration-submit {
+    min-width: 210px;
+    margin-top: 0;
+    padding: 0 16px;
+}
+
+.account-trade-section {
+    margin-top: 24px;
+    padding: 24px;
+    background: #151c17;
+    border: 1px solid #34463a;
+}
+
+.account-trade-section h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.account-trade-description {
+    margin: 0 0 20px;
+    color: #b7c8bb;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#steam-trade-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+}
+
+#steam-trade-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#steam-trade-url {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    color: #f5f5f5;
+    background: #111712;
+    border: 1px solid #45684e;
+    border-radius: 0;
+    font: inherit;
+}
+
+#steam-trade-url:focus {
+    border-color: var(--account-accent);
+    outline: 2px solid rgb(101 207 138 / 20%);
+}
+
+#steam-trade-form .registration-submit {
+    margin-top: 0;
+    padding: 0 18px;
+}
+
+.account-page .registration-eyebrow {
+    color: var(--account-accent);
+}
+
+.account-page .registration-submit {
+    color: #101812;
+    background: var(--account-accent);
+}
+
+.account-page .registration-submit:hover {
+    background: #7cdda0;
+}
+
+.account-page .account-link {
+    color: #d7f4df;
+    background: #26382c;
+    border: 1px solid #45684e;
+}
+
+.account-page .account-link:hover {
+    background: #304a38;
+}
+
+.account-page .steam-profile {
+    border-top-color: #34463a;
+}
+
+.account-main-panel .steam-profile {
+    margin: 24px 0 0;
+    padding: 24px;
+    background: #151c17;
+    border: 1px solid #34463a;
+}
+
+.account-main-panel .steam-profile h2 {
+    margin-bottom: 22px;
+}
+
+.account-main-panel .steam-profile-details {
+    min-height: 150px;
+    padding: 20px;
+    gap: 24px;
+    background: #19231c;
+    border: 1px solid #34463a;
+}
+
+.steam-profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.registration-card {
+    width: min(100%, 440px);
+    padding: 36px;
+    background: #242424;
+    border: 1px solid #383838;
+    border-radius: 0;
+    box-shadow: 0 18px 48px rgb(0 0 0 / 28%);
+}
+
+.registration-eyebrow {
+    margin: 0 0 10px;
+    color: #b8b8b8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+
+.registration-card h1 {
+    margin: 0;
+    font-size: clamp(25px, 5vw, 32px);
+}
+
+.registration-description {
+    margin: 10px 0 28px;
+    color: #b8b8b8;
+    line-height: 1.5;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0 0 28px;
+    padding: 4px;
+    background: #181818;
+    border-radius: 0;
+}
+
+.auth-tab {
+    min-height: 40px;
+    color: #b8b8b8;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.auth-tab.is-active {
+    color: #171717;
+    background: #f0f0f0;
+}
+
+#registration-form {
+    display: flex;
+    flex-direction: column;
+}
+
+#registration-form label,
+#login-form label {
+    margin: 16px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#registration-form input,
+#login-form input {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    color: #f5f5f5;
+    background: #181818;
+    border: 1px solid #484848;
+    border-radius: 0;
+    font: inherit;
+}
+
+#registration-form input:focus,
+#login-form input:focus {
+    border-color: #b8b8b8;
+    outline: 2px solid rgb(184 184 184 / 25%);
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-hint {
+    margin-top: 7px;
+    color: #a7a7a7;
+    font-size: 12px;
+}
+
+.registration-submit {
+    min-height: 48px;
+    margin-top: 28px;
+    color: #171717;
+    background: #f0f0f0;
+    border: 0;
+    border-radius: 0;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.registration-submit:hover {
+    background: #d3d3d3;
+}
+
+.registration-submit:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 16px;
+    color: #a7a7a7;
+    font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    height: 1px;
+    flex: 1;
+    background: #3d3d3d;
+    content: "";
+}
+
+.auth-provider-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.auth-provider-button {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #f5f5f5;
+    background: #1b1b1b;
+    border: 1px solid #484848;
+    border-radius: 0;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.provider-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+}
+
+.auth-provider-button:hover {
+    background: #303030;
+}
+
+.auth-provider-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.registration-status {
+    margin: 16px 0 0;
+    color: #d8d8d8;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.account-link {
+    display: inline-flex;
+    min-height: 46px;
+    margin-top: 20px;
+    padding: 0 18px;
+    align-items: center;
+    justify-content: center;
+    color: #171717;
+    background: #f0f0f0;
+    border-radius: 0;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.account-link:hover {
+    background: #d3d3d3;
+}
+
+.account-detail {
+    margin: 20px 0;
+    color: #d8d8d8;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.steam-profile {
+    margin: 28px 0 8px;
+    padding-top: 20px;
+    border-top: 1px solid #383838;
+}
+
+.steam-profile h2 {
+    display: flex;
+    margin: 0 0 16px;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+}
+
+.steam-profile-details {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.steam-brand-mark {
+    display: flex;
+    width: 64px;
+    height: 48px;
+    flex: 0 0 64px;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--account-accent, #66c0f4);
+}
+
+.steam-brand-icon {
+    width: 48px;
+    height: 48px;
+}
+
+.steam-avatar {
+    width: 76px;
+    height: 76px;
+    border: 1px solid #484848;
+    object-fit: cover;
+}
+
+.steam-avatar[hidden] {
+    display: none;
+}
+
+.steam-name {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.steam-id {
+    margin: 0;
+    color: #a7a7a7;
+    font-size: 12px;
+}
+
+.steam-profile .account-link {
+    margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+    .registration-card {
+        padding: 28px 22px;
+    }
+}
+
+@media (max-width: 760px) {
+    .account-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .account-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid #34463a;
+    }
+
+    .account-main-panel {
+        padding: 24px;
+    }
+
+    .account-link-section {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .account-link-section .registration-submit {
+        width: 100%;
+    }
+
+    #steam-trade-form {
+        grid-template-columns: 1fr;
+    }
+
+    #steam-trade-form .registration-submit {
+        width: 100%;
+    }
+}
+

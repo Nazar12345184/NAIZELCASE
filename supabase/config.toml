@@ -1,0 +1,4 @@
+project_id = "na1zelcase"
+
+[functions.steam-auth]
+verify_jwt = false
