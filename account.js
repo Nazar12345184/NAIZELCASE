@@ -13,11 +13,16 @@ const steamTradeInput = document.querySelector("#steam-trade-url");
 const steamTradeStatus = document.querySelector("#steam-trade-status");
 const saveSteamTradeButton = document.querySelector("#save-steam-trade");
 const steamProfile = document.querySelector("#steam-profile");
-const steamAvatar = document.querySelector("#steam-avatar");
 const steamName = document.querySelector("#steam-name");
 const steamId = document.querySelector("#steam-id");
 const steamProfileLink = document.querySelector("#steam-profile-link");
 const steamProfileNote = document.querySelector("#steam-profile-note");
+const accountBalance = document.querySelector("#account-balance");
+
+const formatBalance = (balance) => {
+    const amount = Number(balance);
+    return `${Number.isFinite(amount) ? amount.toFixed(2) : "0.00"} ₴`;
+};
 
 const showError = (error) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -53,6 +58,10 @@ const loadSteamProfile = async (accessToken) => {
         throw new Error(result.error || "Не вдалося отримати інформацію Steam.");
     }
 
+    if (accountBalance) {
+        accountBalance.textContent = formatBalance(result.balance);
+    }
+
     if (!result.linked) {
         return;
     }
@@ -65,10 +74,7 @@ const loadSteamProfile = async (accessToken) => {
     steamId.textContent = `Steam ID: ${result.steam.steam_id}`;
     steamProfileLink.href = result.steam.profile_url;
 
-    if (result.steam.avatar_url) {
-        steamAvatar.src = result.steam.avatar_url;
-        steamAvatar.hidden = false;
-    } else {
+    if (!result.steam.avatar_url) {
         steamProfileNote.textContent = "Аватар недоступний або профіль Steam приватний.";
         steamProfileNote.hidden = false;
     }

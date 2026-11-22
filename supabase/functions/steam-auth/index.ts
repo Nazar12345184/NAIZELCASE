@@ -413,8 +413,16 @@ Deno.serve(async (request) => {
             if (steamError) {
                 throw steamError;
             }
+
+            const { data: balanceAccount } = await admin
+                .from("user_balances")
+                .select("balance")
+                .eq("user_id", userResult.user.id)
+                .maybeSingle();
+            const balance = balanceAccount?.balance ?? 0;
+
             if (!steamAccount) {
-                return jsonResponse({ linked: false }, 200, siteOrigin);
+                return jsonResponse({ linked: false, balance }, 200, siteOrigin);
             }
 
             let profile = {
@@ -438,6 +446,7 @@ Deno.serve(async (request) => {
 
             return jsonResponse({
                 linked: true,
+                balance,
                 steam: {
                     steam_id: steamAccount.steam_id,
                     persona_name: profile.persona_name,
