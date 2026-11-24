@@ -38,11 +38,12 @@ const loadHeaderUser = async () => {
     badge.hidden = false;
     badge.querySelectorAll(".header-avatar").forEach((avatar) => avatar.remove());
     badge.innerHTML = `
-        <span class="header-balance">
-            <span>Баланс</span>
-            <strong>0.00 ₴</strong>
-        </span>
-    `;
+    <div class="header-balance">
+        <span>Баланс</span>
+        <strong>0.00 ₴</strong>
+    </div>
+    <button type="button" class="balance-top-up" aria-label="Поповнити баланс" title="Поповнити баланс">+</button>
+`;
 
     const balanceElement = badge.querySelector(".header-balance strong");
 

@@ -10,6 +10,9 @@ body {
 }
 
 header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     min-height: 78px;
     padding: 16px clamp(20px, 6vw, 88px);
     display: flex;
@@ -23,7 +26,8 @@ header .header-user-badge {
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-direction: row;
+    gap: 8px;
 }
 
 .header-avatar {
@@ -35,8 +39,12 @@ header .header-user-badge {
 }
 
 .header-balance {
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 2px;
+    width: 68px;
+    line-height: 1.2;
     text-align: right;
 }
 
@@ -128,8 +136,9 @@ header .header-user-badge {
 
 .account-balance {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     margin: 0 0 16px;
     padding: 14px 16px;
     background: #1f2a22;
@@ -535,6 +544,22 @@ header .header-user-badge {
 
 .steam-profile .account-link {
     margin-top: 12px;
+}
+
+.balance-top-up {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #65cf8a;
+    border-radius: 0;
+    cursor: pointer;
+    background: #65cf8a;
+    color: #101812;
+    font: inherit;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 @media (max-width: 480px) {
