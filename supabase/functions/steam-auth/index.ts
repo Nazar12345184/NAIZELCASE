@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createHmac } from "node:crypto";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/, "") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -60,6 +61,10 @@ const getAdminClient = () => {
     return createClient(supabaseUrl, serviceRoleKey, {
         auth: { autoRefreshToken: false, persistSession: false }
     });
+};
+
+const hmacMd5 = (message: string, secret: string) => {
+    return createHmac("md5", secret).update(message, "utf8").digest("hex");
 };
 
 const randomState = () => {
@@ -413,8 +418,16 @@ Deno.serve(async (request) => {
             if (steamError) {
                 throw steamError;
             }
+
+            const { data: balanceAccount } = await admin
+                .from("user_balances")
+                .select("balance")
+                .eq("user_id", userResult.user.id)
+                .maybeSingle();
+            const balance = balanceAccount?.balance ?? 0;
+
             if (!steamAccount) {
-                return jsonResponse({ linked: false }, 200, siteOrigin);
+                return jsonResponse({ linked: false, balance }, 200, siteOrigin);
             }
 
             let profile = {
@@ -438,12 +451,221 @@ Deno.serve(async (request) => {
 
             return jsonResponse({
                 linked: true,
+                balance,
                 steam: {
                     steam_id: steamAccount.steam_id,
                     persona_name: profile.persona_name,
                     avatar_url: profile.avatar_url,
                     profile_url: `https://steamcommunity.com/profiles/${steamAccount.steam_id}/`
                 }
+            }, 200, siteOrigin);
+        }
+
+        if (action === "topup_create" && request.method === "POST") {
+            const siteOrigin = getAllowedOrigin(origin);
+            const authorization = request.headers.get("authorization") ?? "";
+            const accessToken = /^Bearer\s+(.+)$/i.exec(authorization)?.[1];
+            if (!accessToken) {
+                return jsonResponse({ error: "Спочатку увійди у свій акаунт." }, 401, siteOrigin);
+            }
+
+            const admin = getAdminClient();
+            const { data: userResult, error: userError } = await admin.auth.getUser(accessToken);
+            if (userError || !userResult.user) {
+                return jsonResponse({ error: "Сеанс завершено. Увійди знову." }, 401, siteOrigin);
+            }
+
+            const body = await request.json();
+            const amount = Number(body.amount);
+            if (!Number.isFinite(amount) || amount < 10 || amount > 25000) {
+                return jsonResponse({ error: "Вкажи суму від 10 до 25000 ₴." }, 400, siteOrigin);
+            }
+
+            const merchantAccount = Deno.env.get("WAYFORPAY_MERCHANT_ACCOUNT") ?? "";
+            const merchantSecretKey = Deno.env.get("WAYFORPAY_MERCHANT_SECRET") ?? "";
+            if (!merchantAccount || !merchantSecretKey) {
+                throw new Error("WayForPay secrets are not configured.");
+            }
+
+            const normalizedAmount = Math.round(amount * 100) / 100;
+            const { data: topup, error: topupError } = await admin
+                .from("balance_topups")
+                .insert({ user_id: userResult.user.id, amount: normalizedAmount })
+                .select("id")
+                .single();
+            if (topupError || !topup) {
+                throw topupError ?? new Error("Не вдалося створити заявку на поповнення.");
+            }
+
+            const redirectUrl = new URL("account.html", siteOrigin);
+            redirectUrl.searchParams.set("topup", "success");
+            const callbackUrl = `${supabaseUrl}/functions/v1/steam-auth?action=topup_callback`;
+            const domain = new URL(siteOrigin).hostname;
+            const orderReference = topup.id;
+            const orderDate = Math.floor(Date.now() / 1000);
+            const amountText = normalizedAmount.toFixed(2);
+            const currency = "UAH";
+            const productName = "Поповнення балансу NA1ZELCASE";
+
+            const signatureData = [
+                merchantAccount,
+                domain,
+                orderReference,
+                String(orderDate),
+                amountText,
+                currency,
+                productName,
+                "1",
+                amountText
+            ].join(";");
+            const merchantSignature = hmacMd5(signatureData, merchantSecretKey);
+
+            const { error: invoiceUpdateError } = await admin
+                .from("balance_topups")
+                .update({
+                    invoice_id: orderReference,
+                    status: "processing",
+                    provider_status: "created",
+                    page_url: "https://secure.wayforpay.com/pay"
+                })
+                .eq("id", topup.id);
+            if (invoiceUpdateError) {
+                throw invoiceUpdateError;
+            }
+
+            return jsonResponse({
+                checkoutUrl: "https://secure.wayforpay.com/pay",
+                invoiceId: orderReference,
+                fields: {
+                    merchantAccount,
+                    merchantDomainName: domain,
+                    merchantSignature,
+                    orderReference,
+                    orderDate,
+                    amount: amountText,
+                    currency,
+                    productName: [productName],
+                    productCount: ["1"],
+                    productPrice: [amountText],
+                    serviceUrl: callbackUrl,
+                    returnUrl: redirectUrl.toString(),
+                    language: "UA"
+                }
+            }, 200, siteOrigin);
+        }
+
+        if (action === "topup_callback" && request.method === "POST") {
+            const contentType = request.headers.get("content-type") ?? "";
+            let body: Record<string, unknown>;
+            if (contentType.includes("application/json")) {
+                body = await request.json();
+            } else {
+                body = Object.fromEntries(await request.formData());
+            }
+            const invoiceId = String(body.orderReference ?? body.invoiceId ?? "");
+            if (!invoiceId) {
+                return new Response("Missing orderReference", { status: 400 });
+            }
+
+            const merchantSecretKey = Deno.env.get("WAYFORPAY_MERCHANT_SECRET") ?? "";
+            if (!merchantSecretKey) {
+                throw new Error("WayForPay secrets are not configured.");
+            }
+            const callbackSignatureData = [
+                body.merchantAccount,
+                body.orderReference,
+                body.amount,
+                body.currency,
+                body.authCode,
+                body.cardPan,
+                body.transactionStatus,
+                body.reasonCode
+            ].join(";");
+            const receivedSignature = String(body.merchantSignature ?? "");
+            if (hmacMd5(callbackSignatureData, merchantSecretKey) !== receivedSignature) {
+                return new Response("Invalid signature", { status: 400 });
+            }
+
+            const admin = getAdminClient();
+            const { data: topup } = await admin
+                .from("balance_topups")
+                .select("amount")
+                .eq("invoice_id", invoiceId)
+                .maybeSingle();
+            const transactionStatus = String(body.transactionStatus ?? "").toLowerCase();
+            if (transactionStatus === "approved" && topup) {
+                const paidAmount = Math.round(Number(body.amount) * 100);
+                const expectedAmount = Math.round(Number(topup.amount) * 100);
+                if (paidAmount === expectedAmount) {
+                    await admin.rpc("finalize_balance_topup", { p_invoice_id: invoiceId });
+                } else {
+                    await admin
+                        .from("balance_topups")
+                        .update({ status: "failed", provider_status: "amount_mismatch" })
+                        .eq("invoice_id", invoiceId);
+                }
+            } else if (["declined", "pending", "expired", "refunded"].includes(transactionStatus)) {
+                const failedStatus = transactionStatus === "expired" ? "expired" : "failed";
+                await admin
+                    .from("balance_topups")
+                    .update({ status: failedStatus, provider_status: transactionStatus })
+                    .eq("invoice_id", invoiceId);
+            }
+
+            const time = Math.floor(Date.now() / 1000);
+            const responseSignature = hmacMd5(
+                [invoiceId, "accept", String(time)].join(";"),
+                merchantSecretKey
+            );
+            return jsonResponse({
+                orderReference: invoiceId,
+                status: "accept",
+                time,
+                signature: responseSignature
+            }, 200);
+        }
+
+        if (action === "topup_status" && request.method === "POST") {
+            const siteOrigin = getAllowedOrigin(origin);
+            const authorization = request.headers.get("authorization") ?? "";
+            const accessToken = /^Bearer\s+(.+)$/i.exec(authorization)?.[1];
+            if (!accessToken) {
+                return jsonResponse({ error: "Спочатку увійди у свій акаунт." }, 401, siteOrigin);
+            }
+
+            const admin = getAdminClient();
+            const { data: userResult, error: userError } = await admin.auth.getUser(accessToken);
+            if (userError || !userResult.user) {
+                return jsonResponse({ error: "Сеанс завершено. Увійди знову." }, 401, siteOrigin);
+            }
+
+            const body = await request.json();
+            const invoiceId = String(body.invoiceId ?? "");
+            if (!invoiceId) {
+                return jsonResponse({ error: "Не вказано рахунок." }, 400, siteOrigin);
+            }
+
+            const { data: topup, error: topupError } = await admin
+                .from("balance_topups")
+                .select("user_id, status, amount")
+                .eq("invoice_id", invoiceId)
+                .maybeSingle();
+            if (topupError) {
+                throw topupError;
+            }
+            if (!topup || topup.user_id !== userResult.user.id) {
+                return jsonResponse({ error: "Рахунок не знайдено." }, 404, siteOrigin);
+            }
+
+            const { data: balanceAccount } = await admin
+                .from("user_balances")
+                .select("balance")
+                .eq("user_id", userResult.user.id)
+                .maybeSingle();
+
+            return jsonResponse({
+                status: topup.status,
+                balance: balanceAccount?.balance ?? 0
             }, 200, siteOrigin);
         }
 
