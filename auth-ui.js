@@ -46,6 +46,9 @@ const loadHeaderUser = async () => {
 `;
 
     const balanceElement = badge.querySelector(".header-balance strong");
+    badge.querySelector(".balance-top-up").addEventListener("click", () => {
+        window.location.assign("account.html?topup=1");
+    });
 
     try {
         const response = await fetch(`${STEAM_AUTH_URL}?action=status`, {

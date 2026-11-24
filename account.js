@@ -18,6 +18,95 @@ const steamId = document.querySelector("#steam-id");
 const steamProfileLink = document.querySelector("#steam-profile-link");
 const steamProfileNote = document.querySelector("#steam-profile-note");
 const accountBalance = document.querySelector("#account-balance");
+const topupDialog = document.querySelector("#topup-dialog");
+const topupForm = document.querySelector("#topup-form");
+const topupAmount = document.querySelector("#topup-amount");
+const topupSubmit = document.querySelector("#topup-submit");
+const topupStatus = document.querySelector("#topup-status");
+const closeTopupButton = document.querySelector("#close-topup");
+const addFundsButton = document.querySelector("#add-funds");
+
+const openTopupDialog = () => {
+    if (topupDialog) {
+        topupDialog.showModal();
+    }
+};
+
+if (addFundsButton) {
+    addFundsButton.addEventListener("click", openTopupDialog);
+}
+
+if (closeTopupButton) {
+    closeTopupButton.addEventListener("click", () => topupDialog.close());
+}
+
+if (topupForm) {
+    topupForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const amount = Number(topupAmount.value);
+        if (!Number.isFinite(amount) || amount < 10 || amount > 25000) {
+            topupStatus.textContent = "Вкажи суму від 10 до 25000 ₴.";
+            topupStatus.hidden = false;
+            return;
+        }
+
+        topupSubmit.disabled = true;
+        topupStatus.textContent = "Створюємо рахунок WayForPay…";
+        topupStatus.hidden = false;
+
+        try {
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !sessionData.session) {
+                throw new Error("Спочатку увійди у свій акаунт.");
+            }
+
+            const response = await fetch(`${STEAM_AUTH_URL}?action=topup_create`, {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_PUBLISHABLE_KEY,
+                    Authorization: `Bearer ${sessionData.session.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ amount })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || "Не вдалося створити рахунок.");
+            }
+
+            if (result.checkoutUrl && result.fields) {
+                const checkoutForm = document.createElement("form");
+                checkoutForm.method = "POST";
+                checkoutForm.action = result.checkoutUrl;
+                for (const [name, value] of Object.entries(result.fields)) {
+                    if (Array.isArray(value)) {
+                        value.forEach((item) => {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = name;
+                            input.value = item;
+                            checkoutForm.append(input);
+                        });
+                    } else {
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = name;
+                        input.value = String(value);
+                        checkoutForm.append(input);
+                    }
+                }
+                document.body.append(checkoutForm);
+                checkoutForm.submit();
+                return;
+            }
+            throw new Error("WayForPay не повернув форму оплати.");
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            topupStatus.textContent = `Не вдалося поповнити баланс: ${message}`;
+            topupSubmit.disabled = false;
+        }
+    });
+}
 
 const formatBalance = (balance) => {
     const amount = Number(balance);
@@ -239,3 +328,13 @@ signOutButton.addEventListener("click", async () => {
 });
 
 loadAccount();
+
+const topupQuery = new URLSearchParams(window.location.search);
+if (topupQuery.get("topup") === "1") {
+    openTopupDialog();
+}
+if (topupQuery.get("topup") === "success") {
+    accountStatus.textContent = "Оплату передано WayForPay. Бали оновляться після підтвердження оплати.";
+    accountStatus.hidden = false;
+    window.setTimeout(() => window.location.replace("account.html"), 3000);
+}
